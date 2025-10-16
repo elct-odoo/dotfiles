@@ -128,9 +128,9 @@ oes() {
 	$path_to_python $path_to_support_tools/oe-support.py $@
 }
 
-clean_database() {
-	$path_to_python $path_to_support_tools/clean_database.py $@
-}
+#clean_database() {
+#	$path_to_python $path_to_support_tools/clean_database.py $@
+#}
 
 # Activate bash style completion
 # If you use oh-my-zsh, bashcompinit should already be autoloaded
@@ -140,6 +140,32 @@ source /home/odoo/dev/support/support-tools/scripts/completion/oe-support-comple
 complete -o default -F _oe-support oes
 source /home/odoo/dev/support/support-tools/scripts/completion
 complete -o default -F _clean-database clean_database
+
+
+# Search for "dblink" in a SQL dump with optional context length
+dblinkgrep() {
+  # first param error handling
+  if [[ -z "$1" ]]; then
+    echo "Usage: dblinkgrep <dump.sql> [context_length]"
+    return 1
+  fi
+
+  local file="$1"
+  local context="${2:-30}"  # Default to 30 if not provided
+  
+  # verify the file is valid if given
+  if [[ ! -f "$file" ]]; then
+    echo "File not found: $file"
+    return 1
+  fi
+
+  # assign number of bytes (chars)
+  local size=$(wc -c < "$file" | tr -d '[:space:]')
+  
+  # Stream the file with a progress bar (using known size), then search case-insensitively for 'dblink'
+# Output only matched snippets showing up to $context characters before and after each occurrence
+  pv -p -s "$size" "$file" | grep -i -o -E ".{0,${context}}dblink.{0,${context}}"
+}
 
 
 #func for scp
