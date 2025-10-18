@@ -9,7 +9,9 @@
                 "start",
                 "${input:get_db}",
                 "--vscode",
-                "--dev=xml,qweb"
+                // "--python",
+                // "/home/odoo/.venvs/shitshow/bin/python",
+                "--dev=xml,qweb",
             ],
             "program": "/home/odoo/dev/support/support-tools/oe-support.py",
             "console": "integratedTerminal"

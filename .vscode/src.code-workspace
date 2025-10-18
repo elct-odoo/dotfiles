@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"git.autoRepositoryDetection": "subFolders",
+		"git.detectSubmodules": true,
+		"git.scanRepositories": [
+			"/home/odoo/dev/src"
+		],
+		"search.followSymlinks": false
+	}
+}
