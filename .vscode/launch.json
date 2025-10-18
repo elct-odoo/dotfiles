@@ -16,7 +16,7 @@
         },
         {
             "name": "Upgrade Odoo",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/.vscode/upgrade_wrapper.py",
             "args": [
