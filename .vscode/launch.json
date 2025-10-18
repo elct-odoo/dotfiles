@@ -26,7 +26,8 @@
                 "${input:upgradeVersion}"
             ],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
         },
         {
             "name": "odoo-bin test file",
@@ -99,6 +100,9 @@
             "type": "pickString",
             "options": [
                 "19.0",
+                "saas-18.4",
+                "saas-18.3",
+                "saas-18.2",
                 "18.0",
                 "17.0",
                 "16.0",
