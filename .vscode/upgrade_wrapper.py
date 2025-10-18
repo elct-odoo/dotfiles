@@ -6,6 +6,24 @@ Supports two modes:
 2. Worktree mode: Uses pre-configured version-specific workspaces (faster)
 
 To enable worktree mode, run: python3 .vscode/setup_worktrees.py
+
+=============================================================================
+ANNUAL VERSION UPDATE CHECKLIST (when new Odoo version is released):
+=============================================================================
+1. Update ALL_VERSIONS list (line ~93)
+   - Add new major version (e.g., 20.0)
+   - Update saas versions (e.g., saas-18.x → saas-19.x)
+   - Optionally drop oldest version
+
+2. Update SAAS_TRACKS dictionary (line ~112)
+   - Update to new saas track (e.g., saas-19.2, saas-19.3, saas-19.4)
+   - Update entry point (e.g., "saas-19.2": "19.0")
+
+3. Update launch.json dropdown (../launch.json line ~101)
+   - Add new versions to "options" list
+
+See README.md for detailed examples.
+=============================================================================
 """
 import subprocess
 import sys
@@ -79,21 +97,41 @@ def calculate_upgrade_path(current_version, target_version):
     Current version can be any version (e.g., 16.0.1.3).
     Target version must be in the supported list.
     
+    SaaS (rolling release) versions are only used if:
+    - Current version is already a SaaS version, OR
+    - Current version is the immediate predecessor (e.g., 18.0 → saas-18.2)
+    
     Returns: (is_valid, path_or_error)
     - path is a list of versions to upgrade through
     - error is a string if invalid
     """
     # All supported versions in order (including SaaS versions)
+    # MANUAL UPDATE THIS LIST when new versions are released
+    # Next year (2026) it will be: 15, 16, 17, 18, 19, saas-19.2, saas-19.3, saas-19.4, 20.0
     ALL_VERSIONS = [
         "15.0",
         "16.0",
         "17.0",
         "18.0",
-        "saas-18.2",
+        "saas-18.2",  # Rolling release versions (current year)
         "saas-18.3",
         "saas-18.4",
         "19.0"
     ]
+    
+    # Map of saas versions and their predecessors
+    # UPDATE THIS when saas versions change (annually)
+    # Next year (2026) it will be:
+    # SAAS_TRACKS = {
+    #     "saas-19.2": "19.0",
+    #     "saas-19.3": "saas-19.2",
+    #     "saas-19.4": "saas-19.3",
+    # }
+    SAAS_TRACKS = {
+        "saas-18.2": "18.0",      # Entry point: 18.0 can go to saas-18.2
+        "saas-18.3": "saas-18.2", # Chain: each saas follows the previous
+        "saas-18.4": "saas-18.3",
+    }
     
     if current_version == "Unknown":
         return False, (
@@ -134,6 +172,34 @@ def calculate_upgrade_path(current_version, target_version):
     if current_major == target_major:
         return False, f"Database is already on version {current_version} (same as {target_version})"
     
+    # Validate SaaS target: can only target a SaaS version if you're on the right track
+    if target_version.startswith('saas-'):
+        # Check if current version is valid to reach this SaaS target
+        valid_for_saas = False
+        
+        # Case 1: Already on SaaS track
+        if current_major.startswith('saas-'):
+            valid_for_saas = True
+        
+        # Case 2: On the immediate predecessor
+        if target_version in SAAS_TRACKS and SAAS_TRACKS[target_version] == current_major:
+            valid_for_saas = True
+        
+        # Case 3: On a SaaS predecessor in the chain
+        for saas_ver, predecessor in SAAS_TRACKS.items():
+            if predecessor.startswith('saas-') and current_major.startswith('saas-'):
+                valid_for_saas = True
+                break
+        
+        if not valid_for_saas:
+            return False, (
+                f"Cannot upgrade to {target_version} from {current_version}.\n"
+                f"   SaaS versions can only be targeted from:\n"
+                f"   - Another SaaS version, OR\n"
+                f"   - Their immediate predecessor (e.g., 18.0 → saas-18.2)\n"
+                f"   Consider upgrading to 19.0 instead."
+            )
+    
     # Find where to start the upgrade path
     # Get the major version and find its position
     try:
@@ -152,8 +218,35 @@ def calculate_upgrade_path(current_version, target_version):
             # Current version is before all our versions, start from first
             current_idx = -1
     
-    # Build upgrade path (all versions from after current to target, inclusive)
+    # Build initial upgrade path (all versions from after current to target, inclusive)
     upgrade_path = ALL_VERSIONS[current_idx + 1:target_idx + 1]
+    
+    if not upgrade_path:
+        return False, f"No upgrade path found from {current_version} to {target_version}"
+    
+    # Filter out SaaS versions if not applicable
+    current_major = get_major_version(current_version)
+    
+    # Check if we should include SaaS versions
+    include_saas = False
+    
+    # Case 1: Already on a SaaS version
+    if current_major.startswith('saas-'):
+        include_saas = True
+    
+    # Case 2: Current is the immediate predecessor to a SaaS version
+    for saas_ver, predecessor in SAAS_TRACKS.items():
+        if current_major == predecessor:
+            include_saas = True
+            break
+    
+    # If we shouldn't include SaaS, filter them out
+    if not include_saas:
+        filtered_path = []
+        for version in upgrade_path:
+            if not version.startswith('saas-'):
+                filtered_path.append(version)
+        upgrade_path = filtered_path
     
     if not upgrade_path:
         return False, f"No upgrade path found from {current_version} to {target_version}"

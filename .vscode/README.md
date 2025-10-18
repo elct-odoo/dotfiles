@@ -39,9 +39,16 @@ The upgrade path follows Odoo's standard sequence:
 
 **Examples:**
 - Upgrading from `15.0` to `17.0`: Goes through `16.0`
-- Upgrading from `16.0.1.3` to `19.0`: Goes through `17.0 → 18.0 → saas-18.2 → saas-18.3 → saas-18.4`
-- Upgrading from `saas~18.2.1.3` to `19.0`: Goes through `saas-18.3 → saas-18.4`
+- Upgrading from `16.0.1.3` to `19.0`: Goes through `17.0 → 18.0 → 19.0` (skipping SaaS versions)
+- Upgrading from `17.0` to `19.0`: Goes through `18.0 → 19.0` (skipping SaaS versions)
+- Upgrading from `saas~18.2.1.3` to `19.0`: Goes through `saas-18.3 → saas-18.4 → 19.0`
 - Upgrading from `18.0` to `saas-18.4`: Goes through `saas-18.2 → saas-18.3`
+
+**SaaS Version Rules:**
+- SaaS versions are **only used** if you're already on a SaaS version OR upgrading from their immediate predecessor (e.g., `18.0`)
+- If you're on `17.0` or earlier, you skip SaaS versions and go directly: `18.0 → 19.0`
+- If you're on `18.0` and target `19.0`, you skip SaaS: `18.0 → 19.0`
+- If you're on `saas~18.x`, you stay on the SaaS track until leaving it
 
 ## 📋 Available Launch Configurations
 
@@ -141,30 +148,48 @@ workspace = os.path.expanduser("~/dev/src")  # Change this
 ### Adding More Versions
 Update both files when new versions are released:
 
-**1. Update `upgrade_wrapper.py`:**
+When new Odoo versions are released (typically yearly), you need to update version lists in **three places**:
+
+#### **1. Update `upgrade_wrapper.py` - ALL_VERSIONS list:**
 ```python
+# Example for 2026 (when 20.0 is released):
 ALL_VERSIONS = [
-    "15.0",
-    "16.0",
+    "16.0",      
     "17.0",
     "18.0",
-    "saas-18.2",
+    "saas-18.2", # Drop SaaS RR nextx year - Manual Update
     "saas-18.3",
     "saas-18.4",
     "19.0",
-    "20.0",  # Add new version here
+    # Add new version - Manual Update
 ]
 ```
 
-**2. Update `launch.json`:**
+#### **2. Update `upgrade_wrapper.py` - SAAS_TRACKS dictionary:**
+```python
+# Example for 2026:
+SAAS_TRACKS = {
+    "saas-19.2": "19.0",       # Update to new saas track
+    "saas-19.3": "saas-19.2",
+    "saas-19.4": "saas-19.3",
+}
+```
+
+#### **3. Update `launch.json` - version dropdown:**
 ```json
 "options": [
-    "20.0",  // Add new version here
+    "20.0",        // Add new version
+    "saas-19.4",   // Update saas versions
+    "saas-19.3",
+    "saas-19.2",
     "19.0",
-    "saas-18.4",
-    ...
+    "18.0",
+    "17.0",
+    "16.0",        // Drop oldest if desired
 ]
 ```
+
+**Why?** Odoo drops old rolling release versions annually. When 20.0 comes out, `saas-18.x` versions are replaced with `saas-19.x`.
 
 ### Custom Database Prefix
 Edit `upgrade_wrapper.py` and `get_dbs.py` if your databases don't use `oes_` prefix.
