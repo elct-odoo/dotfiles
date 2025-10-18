@@ -7,7 +7,7 @@
             "request": "launch",
             "args": [
                 "start",
-                "${input:upgradeDB}",
+                "${input:get_db}",
                 "--vscode",
                 "--dev=xml,qweb"
             ],
@@ -20,7 +20,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/.vscode/upgrade_wrapper.py",
             "args": [
-                "${input:upgradeDB}",
+                "${input:get_db}",
                 "${input:upgradeVersion}"
             ],
             "console": "integratedTerminal",
@@ -84,11 +84,11 @@
     ],
     "inputs": [
         {
-            "id": "upgradeDB",
+            "id": "get_db",
             "type": "command",
             "command": "shellCommand.execute",
             "args": {
-                "command": "${workspaceFolder}/.vscode/getDBS.py",
+                "command": "${workspaceFolder}/.vscode/get_dbs.py",
                 "useSingleResult": false
             },
         },
@@ -102,7 +102,7 @@
                 "16.0",
                 "15.0",
             ],
-            "description": "Select the Odoo version to upgrade to"
+            "description": "Choose the target version for the upgrade"
         }
     ]
 }

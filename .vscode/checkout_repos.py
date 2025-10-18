@@ -14,19 +14,19 @@ workspace = os.path.expanduser("~/dev/src")  # adjust to your dev folder
 repos_versioned = ["odoo", "enterprise", "design-themes"]
 repos_master = ["internal", "upgrade", "upgrade-specific", "upgrade-util"]
 
-# Helper to run git commands
+# Git helper
 def git_checkout(path, branch):
     print(f"Checking out {path} -> {branch}")
     subprocess.run(["git", "fetch", "--all"], cwd=path, check=True)
     subprocess.run(["git", "checkout", branch], cwd=path, check=True)
     subprocess.run(["git", "pull", "--ff-only"], cwd=path, check=True)
 
-# Checkout versioned repos to selected version
+# Checkout main repos to target version
 for repo in repos_versioned:
     repo_path = os.path.join(workspace, repo)
     git_checkout(repo_path, version)
 
-# Checkout master repos to master
+# Checkout upgrade and internal repos to master
 for repo in repos_master:
     repo_path = os.path.join(workspace, repo)
     git_checkout(repo_path, "master")
