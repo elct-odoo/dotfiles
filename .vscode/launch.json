@@ -90,19 +90,19 @@
             "args": {
                 "command": "${workspaceFolder}/.vscode/getDBS.py",
                 "useSingleResult": false
-            }
+            },
         },
         {
             "id": "upgradeVersion",
             "type": "pickString",
             "options": [
-                
+                "19.0",
                 "18.0",
                 "17.0",
                 "16.0",
                 "15.0",
             ],
-            "description": "Select the Odoo version to checkout"
+            "description": "Select the Odoo version to upgrade to"
         }
     ]
 }
